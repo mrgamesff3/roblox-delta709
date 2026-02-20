@@ -392,6 +392,13 @@ a:hover { color: #ffd700; }
       </a>
     </div>
 
+    <div id="step4" class="step">
+      <a href="#" onclick="completeStep(4, 'https://whatsapp.com/channel/0029Vb7DUCwJuyAB5pN1lh47'); return false;">
+        <span>📱💬 اضغط هنا وقم بالانضمام لقناه الواتس اب هذه</span>
+        <span id="check4" class="check">➡️</span>
+      </a>
+    </div>
+
     <div class="final-section">
       <div id="finalMessage" class="final-message">❌ نفّذ الخطوات أولاً لكي يتم فتح روابط التحميل</div>
       <div class="final-buttons">
@@ -407,13 +414,14 @@ a:hover { color: #ffd700; }
     document.getElementById("mainImage").addEventListener("contextmenu", function(e){ e.preventDefault(); });
 
     const STEP_EXPIRY_MS = 365 * 24 * 60 * 60 * 1000;
-    // روابط اللايك والتعليق (التي أصبحت تخص الخطوة 3 الآن)
+    // روابط اللايك والتعليق (التي تخص الخطوة 3)
     const step3Links = ["https://youtu.be/hYGIZV-KSk8"];
     
     // المفاتيح المطلوبة
     const stepsStateKey = "stepsState"; 
-    const channel2StorageKey = "step2NewChannelKey_v847293847293847"; // مفتاح جديد للقناة الثانية
-    const likeCommentStorageKey = "step2NewKey_v76323253273727326324242_82732646246246247274"; // تم الحفاظ على هذا المفتاح القديم حتى لا يفقد المستخدمون السابقون التقدم
+    const channel2StorageKey = "step2NewChannelKey_v847293847293847";
+    const likeCommentStorageKey = "step2NewKey_v76323253273727326324242_82732646246246247274";
+    const whatsappStorageKey = "step4WhatsAppKey_v123456789"; // المفتاح الجديد لقناة الواتساب
 
     function isStateExpired(savedState) { 
         if(!savedState.timestamp) return true; 
@@ -425,34 +433,41 @@ a:hover { color: #ffd700; }
       const savedState = JSON.parse(localStorage.getItem(stepsStateKey) || "{}");
       const channel2State = JSON.parse(localStorage.getItem(channel2StorageKey) || "{}");
       const likeCommentState = JSON.parse(localStorage.getItem(likeCommentStorageKey) || "{}");
+      const whatsappState = JSON.parse(localStorage.getItem(whatsappStorageKey) || "{}");
 
       // التحقق من انتهاء الصلاحية
       if(isStateExpired(savedState)){
         localStorage.removeItem(stepsStateKey);
         localStorage.removeItem(channel2StorageKey);
         localStorage.removeItem(likeCommentStorageKey);
+        localStorage.removeItem(whatsappStorageKey);
       }
 
-      // التحقق من الخطوة 1 (القناة الأولى)
+      // التحقق من الخطوة 1
       if(savedState["step1"]){
         document.getElementById("step1").classList.add("completed");
         document.getElementById("check1").innerText="✅";
-        // تفعيل الخطوة الثانية
         document.getElementById("step2").classList.add("active");
       }
 
-      // التحقق من الخطوة 2 (القناة الثانية)
+      // التحقق من الخطوة 2
       if(channel2State.completed){
         document.getElementById("step2").classList.add("completed");
         document.getElementById("check2").innerText="✅";
-        // تفعيل الخطوة الثالثة
         document.getElementById("step3").classList.add("active");
       }
 
-      // التحقق من الخطوة 3 (اللايك والتعليق)
+      // التحقق من الخطوة 3
       if(likeCommentState.completed){
         document.getElementById("step3").classList.add("completed");
         document.getElementById("check3").innerText="✅";
+        document.getElementById("step4").classList.add("active");
+      }
+
+      // التحقق من الخطوة 4 (الواتساب)
+      if(whatsappState.completed){
+        document.getElementById("step4").classList.add("completed");
+        document.getElementById("check4").innerText="✅";
       }
 
       unlockButtons();
@@ -460,7 +475,7 @@ a:hover { color: #ffd700; }
 
       // التمرير لأول خطوة غير مكتملة
       let firstIncomplete=null;
-      for(let i=1;i<=3;i++){
+      for(let i=1;i<=4;i++){
         if(!document.getElementById("step"+i).classList.contains("completed")){
           firstIncomplete=document.getElementById("step"+i);
           break;
@@ -482,7 +497,6 @@ a:hover { color: #ffd700; }
       const alreadyCompleted = stepElement.classList.contains("completed");
 
       if (step === 3) {
-        // منطق الخطوة 3 (رابط عشوائي للايك والتعليق)
         const selected = step3Links[Math.floor(Math.random() * step3Links.length)];
         window.open(selected, "_blank");
       } else if (url) {
@@ -501,16 +515,19 @@ a:hover { color: #ffd700; }
 
         let nextStep = null;
 
-        if (step === 3) {
-          // حفظ حالة الخطوة 3 (اللايك والتعليق بالمفتاح القديم)
+        if (step === 4) {
+          // حفظ حالة الخطوة 4 (الواتساب)
+          localStorage.setItem(whatsappStorageKey, JSON.stringify({ completed: true, timestamp: Date.now() }));
+        } else if (step === 3) {
+          // حفظ حالة الخطوة 3 وتفعيل الرابعة
           localStorage.setItem(likeCommentStorageKey, JSON.stringify({ completed: true, timestamp: Date.now() }));
+          nextStep = document.getElementById("step4");
+          if (nextStep) nextStep.classList.add("active");
         } else if (step === 2) {
-          // حفظ حالة الخطوة 2 (القناة الثانية بالمفتاح الجديد)
           localStorage.setItem(channel2StorageKey, JSON.stringify({ completed: true, timestamp: Date.now() }));
           nextStep = document.getElementById("step3");
           if (nextStep) nextStep.classList.add("active");
         } else {
-          // حفظ حالة الخطوة 1
           saveStepState(step);
           nextStep = document.getElementById("step2");
           if (nextStep) nextStep.classList.add("active");
@@ -528,12 +545,13 @@ a:hover { color: #ffd700; }
     }
 
     function unlockButtons(){
-      // التحقق من اكتمال الخطوات الثلاثة
+      // التحقق من اكتمال الخطوات الأربعة
       const step1Done = document.getElementById("step1").classList.contains("completed");
       const step2Done = document.getElementById("step2").classList.contains("completed");
       const step3Done = document.getElementById("step3").classList.contains("completed");
+      const step4Done = document.getElementById("step4").classList.contains("completed");
 
-      if(step1Done && step2Done && step3Done){
+      if(step1Done && step2Done && step3Done && step4Done){
         document.getElementById("finalMessage").innerText="✅ تم تنفيذ كل الخطوات بنجاح";
         document.getElementById("finalMessage").style.color="#10b981"; 
         document.getElementById("finalMessage").style.textShadow="0 0 10px #ffd700";
@@ -541,7 +559,8 @@ a:hover { color: #ffd700; }
         setTimeout(()=>{ document.getElementById("btnDownload").scrollIntoView({behavior:"smooth", block:"center"}); },800);
 
 
-/* 
+
+/*
 
         if(!document.getElementById("btnGuide")){
           const guideBtn=document.createElement("a");
@@ -557,8 +576,6 @@ a:hover { color: #ffd700; }
 */
 
 
-
-
       }
     }
 
@@ -567,11 +584,12 @@ a:hover { color: #ffd700; }
       if(document.getElementById("step1").classList.contains("completed")) done++;
       if(document.getElementById("step2").classList.contains("completed")) done++;
       if(document.getElementById("step3").classList.contains("completed")) done++;
+      if(document.getElementById("step4").classList.contains("completed")) done++;
       
-      document.getElementById("progressBar").style.width=(done/3)*100+"%";
+      document.getElementById("progressBar").style.width=(done/4)*100+"%";
     }
 
-    for(let i=1;i<=3;i++){ document.getElementById("step"+i).addEventListener("contextmenu", function(e){ e.preventDefault(); }); }
+    for(let i=1;i<=4;i++){ document.getElementById("step"+i).addEventListener("contextmenu", function(e){ e.preventDefault(); }); }
     
     function goToDownload(){ window.open("https://www.mediafire.com/file/0dhjkb6h0gjexy1/%25D9%2587%25D8%25A7%25D9%2583_%25D8%25AF%25D9%2584%25D8%25AA%25D8%25A7_%25D8%25A7%25D9%2584%25D8%25B9%25D9%2585%25D9%258A%25D9%2584_709.rar/file","_blank"); }
 
